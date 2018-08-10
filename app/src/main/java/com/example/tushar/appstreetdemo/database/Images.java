@@ -10,15 +10,10 @@ public class Images {
     @NonNull
     @PrimaryKey(autoGenerate = true)
     private int id;
+
     private String imageName;
 
-    public String getImageName() {
-        return imageName;
-    }
-
-    public void setImageName(String imageName) {
-        this.imageName = imageName;
-    }
+    private String imageUrl;
 
     @NonNull
     public int getId() {
@@ -29,4 +24,19 @@ public class Images {
         this.id = id;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }
