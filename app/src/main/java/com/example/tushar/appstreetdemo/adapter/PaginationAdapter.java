@@ -14,6 +14,7 @@ import android.widget.ImageView;
 
 import com.example.tushar.appstreetdemo.R;
 import com.example.tushar.appstreetdemo.database.Images;
+import com.example.tushar.appstreetdemo.interfaces.ImageClickListener;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     private static final int ITEM = 0;
     private List<Images> imageUrls;
+    private ImageClickListener clicklistener = null;
 
     public PaginationAdapter() {
         imageUrls = new ArrayList<>();
@@ -81,14 +83,28 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
     }
 
-    protected class ImageViewHolder extends RecyclerView.ViewHolder {
+    protected class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private ImageView imageView;
 
         public ImageViewHolder(View itemView) {
             super(itemView);
+            itemView.setOnClickListener(this);
             imageView = (ImageView) itemView.findViewById(R.id.item_text);
         }
+
+        @Override
+        public void onClick(View v) {
+            if (clicklistener != null) {
+                clicklistener.itemClicked(v, getAdapterPosition());
+            }
+        }
     }
+
+    public void setClickListener(ImageClickListener clicklistener) {
+        this.clicklistener = clicklistener;
+    }
+
+
 
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;

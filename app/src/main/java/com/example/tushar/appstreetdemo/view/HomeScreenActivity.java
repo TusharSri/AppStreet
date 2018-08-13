@@ -3,6 +3,7 @@ package com.example.tushar.appstreetdemo.view;
 import android.app.DownloadManager;
 import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -16,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -23,6 +25,7 @@ import com.example.tushar.appstreetdemo.adapter.PaginationAdapter;
 import com.example.tushar.appstreetdemo.R;
 import com.example.tushar.appstreetdemo.database.ImageDatabase;
 import com.example.tushar.appstreetdemo.database.Images;
+import com.example.tushar.appstreetdemo.interfaces.ImageClickListener;
 import com.example.tushar.appstreetdemo.interfaces.JobCallBack;
 import com.example.tushar.appstreetdemo.model.ImageResponse;
 import com.example.tushar.appstreetdemo.networking.ImageUrlJob;
@@ -32,15 +35,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeScreenActivity extends AppCompatActivity implements JobCallBack {
+public class HomeScreenActivity extends AppCompatActivity implements JobCallBack, ImageClickListener {
 
     private static final String TAG = HomeScreenActivity.class.getSimpleName();
     private GridLayoutManager gridLayoutManager;
     private PaginationAdapter paginationAdapter;
     private RecyclerView homeRecyclerView;
     private static final String DATABASE_NAME = "image_db";
-    private ImageDatabase movieDatabase;
+    private ImageDatabase imageDatabase;
     private EditText searchEditText;
+    private String searchedString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +65,12 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         homeRecyclerView.setLayoutManager(linearLayoutManager);
         homeRecyclerView.setItemAnimator(new DefaultItemAnimator());
         homeRecyclerView.setAdapter(paginationAdapter);
+        paginationAdapter.setClickListener(this);
         searchEditText = findViewById(R.id.search_editText);
     }
 
     private void addDb() {
-        movieDatabase = Room.databaseBuilder(getApplicationContext(),
+        imageDatabase = Room.databaseBuilder(getApplicationContext(),
                 ImageDatabase.class, DATABASE_NAME)
                 .build();
     }
@@ -96,7 +101,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 homeRecyclerView.setLayoutManager(gridLayoutManager);
                 return true;
             case R.id.action_search:
-                String searchedString = searchEditText.getText().toString().trim();
+                searchedString = searchEditText.getText().toString().trim();
                 if (searchedString.length() > 0) {
                     Utils.showProgressDialog(this, "Fetching data, Please wait");
                     callForRepo(searchedString);
@@ -128,15 +133,30 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     }
 
     /**
+     * Open Full sreen activity when an item image is clicked
+     *
+     * @param view
+     * @param position
+     */
+    @Override
+    public void itemClicked(View view, int position) {
+        Intent intent = new Intent(this, FullImageActivity.class);
+        intent.putExtra( "searchedString",searchedString);
+        intent.putExtra("position", position);
+        startActivity(intent);
+    }
+
+    /**
      * Async class to fetch data from database
      */
     public class FetchDataFromDB extends AsyncTask<String, Integer, String> {
         List<Images> imageUrls = new ArrayList<>();
         String searchedString = "";
+
         @Override
         protected String doInBackground(String... params) {
             searchedString = params[0];
-            imageUrls = movieDatabase.daoAccess().fetchImages("%"+searchedString+"%");
+            imageUrls = imageDatabase.daoAccess().fetchImages("%" + searchedString + "%");
             return null;
         }
 
@@ -157,7 +177,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
      * Call the api to get the data
      */
     private void callApiToGetImages(String searchedString) {
-        ImageUrlJob.getImageUrl(searchedString, movieDatabase, this);
+        ImageUrlJob.getImageUrl(searchedString, imageDatabase, this);
     }
 
     @Override
@@ -168,7 +188,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         List<Images> img = new ArrayList<>();
         String filename;
         for (int i = 0; i < imageResponse.getValue().size(); i++) {
-            filename = searchEditText.getText().toString()+i+".jpg";
+            filename = searchedString + i + ".jpg";
             Images images = new Images();
             images.setImageUrl(imageResponse.getValue().get(i).getContentUrl());
             images.setImageName(filename);
@@ -199,7 +219,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         protected String doInBackground(String... strings) {
             List<Images> imageslst = new ArrayList<>();
             for (int i = 0; i < imagesList.size(); i++) {
-                String filename = searchEditText.getText().toString()+i+".jpg";
+                String filename = searchedString + i + ".jpg";
                 String downloadUrlOfImage = imagesList.get(i).getImageUrl();
                 File direct =
                         new File(Environment
@@ -216,7 +236,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
                         .setAllowedOverRoaming(false)
-                        .setTitle(searchEditText.getText().toString()+i)
+                        .setTitle(searchedString + i)
                         .setMimeType("image/jpeg")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES,
@@ -228,7 +248,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 images.setImageUrl(filename);
                 imageslst.add(images);
             }
-            movieDatabase.daoAccess().inertImages(imageslst);
+            imageDatabase.daoAccess().inertImages(imageslst);
             return null;
         }
 

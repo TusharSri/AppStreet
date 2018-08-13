@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RelativeLayout
+<!--    <RelativeLayout
         android:id="@+id/offline_banner_relative"
         android:layout_width="match_parent"
         android:layout_height="20dp"
@@ -15,17 +15,11 @@
             android:gravity="center_horizontal"
             android:text="You are currently offline"/>
 
-    </RelativeLayout>
+    </RelativeLayout>-->
 
     <ImageView
         android:id="@+id/full_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <Button
-        android:id="@+id/button"
-        android:layout_alignParentBottom="true"
-        android:text="click to animate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
 </RelativeLayout>

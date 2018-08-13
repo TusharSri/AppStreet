@@ -12,7 +12,7 @@ import retrofit2.Response;
 
 public class ImageUrlJob {
    // private static JobCallBack jobCallBack;
-    public static void getImageUrl(String searchedString, final ImageDatabase movieDatabase,final JobCallBack jobCallBack) {
+    public static void getImageUrl(String searchedString, final ImageDatabase imageDatabase,final JobCallBack jobCallBack) {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<ImageResponse> call = apiService.getImageDetails(searchedString,"10");
         call.enqueue(new Callback<ImageResponse>() {
