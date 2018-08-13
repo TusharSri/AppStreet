@@ -55,7 +55,7 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         switch (getItemViewType(position)) {
             case ITEM:
                 ImageViewHolder imageViewHolder = (ImageViewHolder) holder;
-                new DownloadImageTask(imageViewHolder.imageView).execute(imageUrl.getImageUrl());
+                new DownloadImageTask(imageViewHolder.imageView).execute(imageUrl.getImageName());
                 break;
         }
     }

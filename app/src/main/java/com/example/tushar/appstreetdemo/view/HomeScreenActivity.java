@@ -166,15 +166,18 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
 
         ImageResponse imageResponse = (ImageResponse) object;
         List<Images> img = new ArrayList<>();
+        String filename;
         for (int i = 0; i < imageResponse.getValue().size(); i++) {
+            filename = searchEditText.getText().toString()+i+".jpg";
             Images images = new Images();
             images.setImageUrl(imageResponse.getValue().get(i).getContentUrl());
+            images.setImageName(filename);
             img.add(images);
         }
 
         new SaveDataToDB(img).execute();
-        /*setDataToAdapter(img);
-        paginationAdapter.notifyDataSetChanged();*/
+        setDataToAdapter(img);
+        paginationAdapter.notifyDataSetChanged();
         Utils.hideProgressDialog();
     }
 
