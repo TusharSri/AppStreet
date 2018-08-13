@@ -136,7 +136,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         @Override
         protected String doInBackground(String... params) {
             searchedString = params[0];
-            imageUrls = movieDatabase.daoAccess().fetchImages(searchedString);
+            imageUrls = movieDatabase.daoAccess().fetchImages("%"+searchedString+"%");
             return null;
         }
 
@@ -173,8 +173,8 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         }
 
         new SaveDataToDB(img).execute();
-        setDataToAdapter(img);
-        paginationAdapter.notifyDataSetChanged();
+        /*setDataToAdapter(img);
+        paginationAdapter.notifyDataSetChanged();*/
         Utils.hideProgressDialog();
     }
 
@@ -221,6 +221,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
 
                 dm.enqueue(request);
                 Images images = new Images();
+                images.setImageName(filename);
                 images.setImageUrl(filename);
                 imageslst.add(images);
             }
