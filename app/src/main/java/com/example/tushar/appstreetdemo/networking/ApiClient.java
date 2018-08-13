@@ -8,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    public static final String BASE_URL = "https://newsapi.org/v2/";
+    public static final String BASE_URL = "https://api.cognitive.microsoft.com/bing/v7.0/";
     private static Retrofit retrofit = null;
 
     public static Retrofit getClient() {

@@ -3,8 +3,6 @@ package com.example.tushar.appstreetdemo.view;
 import android.app.DownloadManager;
 import android.arch.persistence.room.Room;
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -31,7 +29,6 @@ import com.example.tushar.appstreetdemo.networking.ImageUrlJob;
 import com.example.tushar.appstreetdemo.utils.Utils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,10 +132,10 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
      */
     public class FetchDataFromDB extends AsyncTask<String, Integer, String> {
         List<Images> imageUrls = new ArrayList<>();
-
+        String searchedString = "";
         @Override
         protected String doInBackground(String... params) {
-            String searchedString = params[0];
+            searchedString = params[0];
             imageUrls = movieDatabase.daoAccess().fetchImages(searchedString);
             return null;
         }
@@ -147,7 +144,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             if (imageUrls.size() <= 0) {
-                callApiToGetImages();
+                callApiToGetImages(searchedString);
             } else {
                 setDataToAdapter(imageUrls);
                 paginationAdapter.notifyDataSetChanged();
@@ -159,8 +156,8 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     /**
      * Call the api to get the data
      */
-    private void callApiToGetImages() {
-        ImageUrlJob.getImageUrl(movieDatabase, this);
+    private void callApiToGetImages(String searchedString) {
+        ImageUrlJob.getImageUrl(searchedString, movieDatabase, this);
     }
 
     @Override
@@ -169,9 +166,9 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
 
         ImageResponse imageResponse = (ImageResponse) object;
         List<Images> img = new ArrayList<>();
-        for (int i = 0; i < imageResponse.getArticles().size(); i++) {
+        for (int i = 0; i < imageResponse.getValue().size(); i++) {
             Images images = new Images();
-            images.setImageUrl(imageResponse.getArticles().get(i).getUrlToImage());
+            images.setImageUrl(imageResponse.getValue().get(i).getContentUrl());
             img.add(images);
         }
 
@@ -184,6 +181,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     @Override
     public void onFailure() {
         Utils.hideProgressDialog();
+        Toast.makeText(this, "Failed to fetch data", Toast.LENGTH_SHORT).show();
     }
 
     public class SaveDataToDB extends AsyncTask<String, Integer, String> {
@@ -196,9 +194,9 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
 
         @Override
         protected String doInBackground(String... strings) {
-
+            List<Images> imageslst = new ArrayList<>();
             for (int i = 0; i < imagesList.size(); i++) {
-                String filename = imagesList.get(i).getImageUrl();
+                String filename = searchEditText.getText().toString()+i+".jpg";
                 String downloadUrlOfImage = imagesList.get(i).getImageUrl();
                 File direct =
                         new File(Environment
@@ -215,15 +213,18 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
                         .setAllowedOverRoaming(false)
-                        .setTitle(filename)
+                        .setTitle(searchEditText.getText().toString()+i)
                         .setMimeType("image/jpeg")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES,
                                 File.separator + "AppStreet" + File.separator + filename);
 
                 dm.enqueue(request);
+                Images images = new Images();
+                images.setImageUrl(filename);
+                imageslst.add(images);
             }
-            movieDatabase.daoAccess().inertImages(imagesList);
+            movieDatabase.daoAccess().inertImages(imageslst);
             return null;
         }
 

@@ -12,7 +12,7 @@ public interface DaoAccess {
     @Insert
     void inertImages(List<Images> imageList);
 
-    @Query("SELECT * FROM Images WHERE imageName = :searchedString")
+    @Query("SELECT * FROM Images WHERE imageName LIKE :searchedString")
     List<Images> fetchImages(String searchedString);
 
 }
