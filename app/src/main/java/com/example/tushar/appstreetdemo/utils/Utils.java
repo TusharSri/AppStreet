@@ -3,6 +3,8 @@ package com.example.tushar.appstreetdemo.utils;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.view.inputmethod.InputMethodManager;
 
 public class Utils {
@@ -42,6 +44,16 @@ public class Utils {
                 (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         if(inputMethodManager != null && activity.getCurrentFocus() != null) {
             inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    public static boolean isNetworkAvailable(Context context) {
+        if (null != context) {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            return netInfo != null && netInfo.isConnectedOrConnecting();
+        } else {
+            return false;
         }
     }
 }

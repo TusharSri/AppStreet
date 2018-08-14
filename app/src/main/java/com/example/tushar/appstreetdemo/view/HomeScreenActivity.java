@@ -4,6 +4,7 @@ import android.app.DownloadManager;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -19,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.example.tushar.appstreetdemo.adapter.PaginationAdapter;
@@ -27,15 +29,18 @@ import com.example.tushar.appstreetdemo.database.ImageDatabase;
 import com.example.tushar.appstreetdemo.database.Images;
 import com.example.tushar.appstreetdemo.interfaces.ImageClickListener;
 import com.example.tushar.appstreetdemo.interfaces.JobCallBack;
+import com.example.tushar.appstreetdemo.interfaces.PingServiceCallback;
 import com.example.tushar.appstreetdemo.model.ImageResponse;
 import com.example.tushar.appstreetdemo.networking.ImageUrlJob;
+import com.example.tushar.appstreetdemo.utils.InternetPingService;
+import com.example.tushar.appstreetdemo.utils.NetworkStateReceiver;
 import com.example.tushar.appstreetdemo.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeScreenActivity extends AppCompatActivity implements JobCallBack, ImageClickListener {
+public class HomeScreenActivity extends AppCompatActivity implements JobCallBack, ImageClickListener, PingServiceCallback {
 
     private static final String TAG = HomeScreenActivity.class.getSimpleName();
     private GridLayoutManager gridLayoutManager;
@@ -45,6 +50,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     private ImageDatabase imageDatabase;
     private EditText searchEditText;
     private String searchedString;
+    private RelativeLayout offlineBanner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +61,11 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     }
 
     private void initViews() {
+        registerReceiver(broadcastReceiver, new IntentFilter("INTERNET_LOST"));
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         gridLayoutManager = new GridLayoutManager(this, 1);
+        offlineBanner = findViewById(R.id.offline_banner_relative);
         homeRecyclerView = findViewById(R.id.home_recyclerview);
         homeRecyclerView.setLayoutManager(gridLayoutManager);
         paginationAdapter = new PaginationAdapter();
@@ -141,7 +149,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     @Override
     public void itemClicked(View view, int position) {
         Intent intent = new Intent(this, FullImageActivity.class);
-        intent.putExtra( "searchedString",searchedString);
+        intent.putExtra("searchedString", searchedString);
         intent.putExtra("position", position);
         startActivity(intent);
     }
@@ -260,4 +268,41 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
             Utils.hideProgressDialog();
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Utils.isNetworkAvailable(this)) {
+            new InternetPingService(this).execute();
+        } else {
+            offlineBanner.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void PingServiceCallback(boolean isConnected) {
+        showBanner(isConnected);
+    }
+
+    public void showBanner(boolean b) {
+        if (b) {
+            offlineBanner.setVisibility(View.GONE);
+        } else {
+            offlineBanner.setVisibility(View.VISIBLE);
+        }
+    }
+
+    NetworkStateReceiver broadcastReceiver = new NetworkStateReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            showBanner(intent.getBooleanExtra("isConnected", false));
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(broadcastReceiver);
+    }
 }
+
