@@ -10,6 +10,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Job to handle network call
+ */
 public class ImageUrlJob {
    // private static JobCallBack jobCallBack;
     public static void getImageUrl(String searchedString,String lastCount, final ImageDatabase imageDatabase,final JobCallBack jobCallBack) {

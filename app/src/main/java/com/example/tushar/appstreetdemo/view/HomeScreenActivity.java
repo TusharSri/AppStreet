@@ -45,6 +45,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Main screen where user can search an image
+ */
 public class HomeScreenActivity extends AppCompatActivity implements JobCallBack, ImageClickListener, PingServiceCallback {
 
     private static final String TAG = HomeScreenActivity.class.getSimpleName();
@@ -67,6 +70,9 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         addDb();
     }
 
+    /**
+     * Checking for storage permission here
+     */
     private void checkPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             //Good to go
@@ -85,6 +91,9 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         }
     }
 
+    /**
+     * Initializing views here
+     */
     private void initViews() {
         registerReceiver(broadcastReceiver, new IntentFilter("INTERNET_LOST"));
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -119,12 +128,22 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 .build();
     }
 
+    /**
+     * Menu created here
+     * @param menu list of all items which are to be added to menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * Selection of menu is handles here
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -319,6 +338,10 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         }
     }
 
+    /**
+     * Checking the ping srvice for internet connection
+     * @param isConnected
+     */
     @Override
     public void PingServiceCallback(boolean isConnected) {
         showBanner(isConnected);
