@@ -25,6 +25,8 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private static final int ITEM = 0;
     private List<Images> imageUrls;
     private ImageClickListener clicklistener = null;
+    private boolean isLoadingAdded = false;
+    private static final int LOADING = 1;
 
     public PaginationAdapter() {
         imageUrls = new ArrayList<>();
@@ -69,7 +71,7 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     @Override
     public int getItemViewType(int position) {
-        return ITEM;
+        return (position == imageUrls.size() - 1 && isLoadingAdded) ? LOADING : ITEM;
     }
 
     public void add(Images mc) {
@@ -81,6 +83,46 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         for (Images mc : mcList) {
             add(mc);
         }
+    }
+
+    public void remove(Images city) {
+        int position = imageUrls.indexOf(city);
+        if (position > -1) {
+            imageUrls.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public void clear() {
+        isLoadingAdded = false;
+        while (getItemCount() > 0) {
+            remove(getItem(0));
+        }
+    }
+
+    public boolean isEmpty() {
+        return getItemCount() == 0;
+    }
+
+    public void addLoadingFooter() {
+        isLoadingAdded = true;
+        add(new Images());
+    }
+
+    public void removeLoadingFooter() {
+        isLoadingAdded = false;
+
+        int position = imageUrls.size() - 1;
+        Images item = getItem(position);
+
+        if (item != null) {
+            imageUrls.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public Images getItem(int position) {
+        return imageUrls.get(position);
     }
 
     protected class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{

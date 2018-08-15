@@ -17,5 +17,5 @@ public interface ApiInterface {
      ***/
     @Headers("Ocp-Apim-Subscription-Key: 0742f95137d64d0fb7870ce7947c8978")
     @GET("images/search")
-    Call<ImageResponse> getImageDetails(@Query("q") String searched, @Query("count") String count);
+    Call<ImageResponse> getImageDetails(@Query("q") String searched, @Query("count") String count, @Query("offset") String offset);
 }

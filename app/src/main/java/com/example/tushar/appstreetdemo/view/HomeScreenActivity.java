@@ -1,13 +1,17 @@
 package com.example.tushar.appstreetdemo.view;
 
+import android.Manifest;
 import android.app.DownloadManager;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -34,6 +38,7 @@ import com.example.tushar.appstreetdemo.model.ImageResponse;
 import com.example.tushar.appstreetdemo.networking.ImageUrlJob;
 import com.example.tushar.appstreetdemo.utils.InternetPingService;
 import com.example.tushar.appstreetdemo.utils.NetworkStateReceiver;
+import com.example.tushar.appstreetdemo.utils.PaginationScrollListener;
 import com.example.tushar.appstreetdemo.utils.Utils;
 
 import java.io.File;
@@ -51,13 +56,33 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
     private EditText searchEditText;
     private String searchedString;
     private RelativeLayout offlineBanner;
+    private int itemFetched = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
+        checkPermission();
         initViews();
         addDb();
+    }
+
+    private void checkPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            //Good to go
+        } else {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                Snackbar.make(homeRecyclerView, "Need permission to store images", Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                ActivityCompat.requestPermissions(HomeScreenActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 11);
+                            }
+                        }).show();
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 11);
+            }
+        }
     }
 
     private void initViews() {
@@ -69,10 +94,21 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         homeRecyclerView = findViewById(R.id.home_recyclerview);
         homeRecyclerView.setLayoutManager(gridLayoutManager);
         paginationAdapter = new PaginationAdapter();
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        homeRecyclerView.setLayoutManager(linearLayoutManager);
+        //LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        //homeRecyclerView.setLayoutManager(gridLayoutManager);
         homeRecyclerView.setItemAnimator(new DefaultItemAnimator());
         homeRecyclerView.setAdapter(paginationAdapter);
+        homeRecyclerView.addOnScrollListener(new PaginationScrollListener(gridLayoutManager) {
+            @Override
+            protected void loadMoreItems() {
+                if (searchedString.length() > 0) {
+                    Utils.showProgressDialog(HomeScreenActivity.this, "Fetching data, Please wait");
+                    callForRepo(searchedString);
+                } else {
+                    Toast.makeText(HomeScreenActivity.this, "Please enter somthing to search", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         paginationAdapter.setClickListener(this);
         searchEditText = findViewById(R.id.search_editText);
     }
@@ -109,6 +145,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 homeRecyclerView.setLayoutManager(gridLayoutManager);
                 return true;
             case R.id.action_search:
+                checkPermission();
                 searchedString = searchEditText.getText().toString().trim();
                 if (searchedString.length() > 0) {
                     Utils.showProgressDialog(this, "Fetching data, Please wait");
@@ -171,9 +208,10 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            if (imageUrls.size() <= 0) {
+            if (imageUrls.size() <= itemFetched) {
                 callApiToGetImages(searchedString);
             } else {
+                itemFetched = imageUrls.size();
                 setDataToAdapter(imageUrls);
                 paginationAdapter.notifyDataSetChanged();
                 Utils.hideProgressDialog();
@@ -185,27 +223,28 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
      * Call the api to get the data
      */
     private void callApiToGetImages(String searchedString) {
-        ImageUrlJob.getImageUrl(searchedString, imageDatabase, this);
+        ImageUrlJob.getImageUrl(searchedString, String.valueOf(itemFetched), imageDatabase, this);
     }
 
     @Override
     public void onSuccess(Object object) {
         Utils.hideProgressDialog();
-
         ImageResponse imageResponse = (ImageResponse) object;
         List<Images> img = new ArrayList<>();
         String filename;
-        for (int i = 0; i < imageResponse.getValue().size(); i++) {
-            filename = searchedString + i + ".jpg";
-            Images images = new Images();
-            images.setImageUrl(imageResponse.getValue().get(i).getContentUrl());
-            images.setImageName(filename);
-            img.add(images);
-        }
+        if(null != imageResponse){
+            for (int i = 0; i < imageResponse.getValue().size(); i++) {
+                filename = searchedString + i + ".jpg";
+                Images images = new Images();
+                images.setImageUrl(imageResponse.getValue().get(i).getContentUrl());
+                images.setImageName(filename);
+                img.add(images);
+            }
 
-        new SaveDataToDB(img).execute();
-        setDataToAdapter(img);
-        paginationAdapter.notifyDataSetChanged();
+            new SaveDataToDB(img).execute();
+            setDataToAdapter(img);
+            paginationAdapter.notifyDataSetChanged();
+        }
         Utils.hideProgressDialog();
     }
 
@@ -227,7 +266,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
         protected String doInBackground(String... strings) {
             List<Images> imageslst = new ArrayList<>();
             for (int i = 0; i < imagesList.size(); i++) {
-                String filename = searchedString + i + ".jpg";
+                String filename = searchedString + itemFetched + ".jpg";
                 String downloadUrlOfImage = imagesList.get(i).getImageUrl();
                 File direct =
                         new File(Environment
@@ -244,7 +283,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
                         .setAllowedOverRoaming(false)
-                        .setTitle(searchedString + i)
+                        .setTitle(searchedString + itemFetched)
                         .setMimeType("image/jpeg")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES,
@@ -255,6 +294,7 @@ public class HomeScreenActivity extends AppCompatActivity implements JobCallBack
                 images.setImageName(filename);
                 images.setImageUrl(filename);
                 imageslst.add(images);
+                itemFetched = itemFetched + 1;
             }
             imageDatabase.daoAccess().inertImages(imageslst);
             return null;

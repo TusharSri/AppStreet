@@ -50,7 +50,7 @@ public class FullImageActivity extends AppCompatActivity {
                     position = position + 1;
                     setImageView(position);
                 } else {
-                    Toast.makeText(FullImageActivity.this, "First Image Reached", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FullImageActivity.this, "Last Image Reached", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -60,7 +60,7 @@ public class FullImageActivity extends AppCompatActivity {
                     position = position - 1;
                     setImageView(position);
                 } else {
-                    Toast.makeText(FullImageActivity.this, "Last Image Reached", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FullImageActivity.this, "First Image Reached", Toast.LENGTH_SHORT).show();
                 }
 
             }

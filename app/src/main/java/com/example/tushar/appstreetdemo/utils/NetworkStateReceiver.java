@@ -16,7 +16,7 @@ public class NetworkStateReceiver extends BroadcastReceiver {
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = manager.getActiveNetworkInfo();
         boolean connected = ni != null && ni.isConnected();
-        context.sendBroadcast(new Intent("INTERNET_LOST").putExtra("isConnected",connected));
+        context.sendBroadcast(new Intent("Testing").putExtra("isConnected",connected));
 
     }
 }
